@@ -28,7 +28,7 @@ float speed = 2000; // cursor movement speed, unit: pixel/second
 ```
 
 # Some example values
- * internal_sampling_frequency
+* internal_sampling_frequency
   * PixART PMW3360: 12000 Hz
   * PixART PMW3390: 16000 Hz
   * Avango ADNS-3090: 6400 Hz
