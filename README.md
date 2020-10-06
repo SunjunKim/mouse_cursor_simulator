@@ -4,6 +4,7 @@ A displayed cursor simulator, with parameters of mouse sampling fps, USB polling
 ## Assumptions
 These assumption are made to purely compare the mouse-related parameters. Added latency from other system components may vary the result away from the simulation.
 * The sensor captures the physical displacement perfectly.
+* There's no overhead in signal processing and numeric computation.
 * The mouse firmware (and maybe OS) keeps the fractional movement (truncated by integer conversion) and accumulate it in the next USB report.
 * There are absolutely no latency in OS and display.
 
