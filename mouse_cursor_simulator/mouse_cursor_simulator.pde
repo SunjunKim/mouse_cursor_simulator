@@ -1,7 +1,7 @@
 // Human parameters
 int internal_sampling_frequency = 12000;  // Mouse image sampling frequency, unit: Hz 
-int polling_frequency = 1000; // USB polling frequency, unit: Hz
-int display_frequency = 60; // display frame per second, unit: Hz
+int polling_frequency = 8000; // USB polling frequency, unit: Hz
+int display_frequency = 320; // display frame per second, unit: Hz
 float eye_retention_period = 150; // unit: ms
 float eye_retention_frequency = 1000.0 / eye_retention_period; // an image presist in the eye (fps)
 //float eye_retention_frequency = 60.0;   // alternatively, you can set the eye frequency directly 
@@ -11,9 +11,13 @@ float eye_retention_frequency = 1000.0 / eye_retention_period; // an image presi
 int sx = 20;  // start position x
 int sy = 10;  // start position y
 int ex = 980; // end position x
-int ey = 70;  // end position y
+int ey = 80;  // end position y
 
-float speed = 4000; // cursor movement speed, unit: pixel/second
+float speed = 3000; // cursor movement speed, unit: pixel/second
+
+boolean display_animation = false;
+float time_multiplier = 1.0 / 10; // when do animation, 1.0 = realtime / 0.1 = 10x slower / 0.01 = 100x slower
+
 
 // ================== INTERNAL VARIABLES =====================
 
@@ -23,7 +27,6 @@ float time_taken = displacement / speed; // unit: second
 float sample_interval = 1.0 / float(internal_sampling_frequency); // unit: second
 float polling_interval = 1.0 / float(polling_frequency);  // unit: second
 float display_interval = 1.0 / float(display_frequency);  // unit: second
-
 
 //int num_sampled_points = floor(time_taken * internal_sampling_frequency);
 //int num_polling_request = floor(time_taken * polling_frequency);
@@ -38,14 +41,18 @@ int N_sample = 0;
 int N_poll = 0;
 int N_display = 0;
 
+int window = 0;
+int last_display_millis = 0;
+float residue = 0;
+
 void setup()
 {
   size(1000, 100);
-  frameRate(5);
-  println(time_taken);
+  frameRate(60);
+  println("Movement Time = "+time_taken);
   //println(num_sampled_points);
   //println(num_polling_request);
-  println(num_cursor_display);
+  println("# Displayed Cursor (total) = "+num_cursor_display);
 
   
   float accum_poll_x = 0;  // accumulated x to be displayed
@@ -59,6 +66,7 @@ void setup()
   
   xs[0] = sx;
   ys[0] = sy;
+  
   
   // for the movement time:
   // time ticks by the sampling interval
@@ -98,35 +106,60 @@ void setup()
     N_sample++;  
     
   }
-  println(N_sample);
-  println(N_poll);
-  println(N_display);
+  println("N_sample = "+N_sample);
+  println("N_poll = "+N_poll);
+  println("N_display = "+N_display);
+  
+  last_display_millis = millis();
 }
 
-int window = 0;
+
 
 void draw()
 {
   background(127);
   strokeWeight(1);
-    
-    
-  float opacity = 0.0;
-  for(int i=window;i<min(N_display, window+num_cursor_persist);i++)
+ 
+  if(display_animation)
   {
-    opacity += 1.0 / num_cursor_persist;
+    float opacity = 0.0;
+    // moving window
+    for(int i=window;i<min(N_display, window+num_cursor_persist);i++)
+    {
+      opacity += 1.0 / num_cursor_persist;
+      
+      stroke(0, opacity*255);
+      fill(255, opacity*255);
+      
+      draw_cursor(xs[i], ys[i]);
+    }
     
-    stroke(0, opacity*255);
-    fill(255, opacity*255);
-    
-    draw_cursor(xs[i], ys[i]);
-  }  
-  
-  window++;
-  if(window == N_display)
-  {
-    window = 0;
+    // proceed the timer with the given time multiplier
+    if(last_display_millis + (display_interval * 1000)/time_multiplier < millis())
+    {
+      window++;
+      
+      if(window == N_display)
+      {
+        window = 0;
+      }
+      
+      last_display_millis = millis();
+    }
   }
+  else
+  {
+    // display all the cursors at once    
+    for(int i=0;i<N_display;i++)
+    {
+      stroke(0);
+      fill(255);
+
+      draw_cursor(xs[i], ys[i]);
+    }
+    
+  }
+  
 }
 
 float interpolate(int start, int end, float total, float i)
