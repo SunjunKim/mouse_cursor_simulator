@@ -6,6 +6,9 @@ float eye_retention_period = 150; // unit: ms
 float eye_retention_frequency = 1000.0 / eye_retention_period; // an image presist in the eye (fps)
 //float eye_retention_frequency = 60.0;   // alternatively, you can set the eye frequency directly 
 
+boolean display_animation = false;
+float time_multiplier = 1.0 / 10; // when do animation, 1.0 = realtime / 0.1 = 10x slower / 0.01 = 100x slower
+
 // Movement profile
 // unit: pixel
 int sx = 20;  // start position x
@@ -13,11 +16,7 @@ int sy = 10;  // start position y
 int ex = 980; // end position x
 int ey = 80;  // end position y
 
-float speed = 3000; // cursor movement speed, unit: pixel/second
-
-boolean display_animation = false;
-float time_multiplier = 1.0 / 10; // when do animation, 1.0 = realtime / 0.1 = 10x slower / 0.01 = 100x slower
-
+float speed = 2000; // cursor movement speed, unit: pixel/second
 
 // ================== INTERNAL VARIABLES =====================
 
@@ -48,7 +47,7 @@ float residue = 0;
 void setup()
 {
   size(1000, 100);
-  frameRate(60);
+  //frameRate(60);
   println("Movement Time = "+time_taken);
   //println(num_sampled_points);
   //println(num_polling_request);
