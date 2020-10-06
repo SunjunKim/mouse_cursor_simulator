@@ -16,7 +16,7 @@ int sy = 10;  // start position y
 int ex = 980; // end position x
 int ey = 80;  // end position y
 
-float speed = 6000; // cursor movement speed, unit: pixel/second
+float speed = 3000; // cursor movement speed, unit: pixel/second
 
 // ================== INTERNAL VARIABLES =====================
 
@@ -81,7 +81,7 @@ void setup()
       accum_poll_x += segment_end_x - segment_start_x;
       accum_poll_y += segment_end_y - segment_start_y;
       
-      last_poll = time;
+      last_poll += polling_interval;
       N_poll++;  
     }
     
@@ -99,7 +99,7 @@ void setup()
       accum_poll_x -= count_x;
       accum_poll_y -= count_y;
       
-      last_disp = time;
+      last_disp += display_interval;
     }
     
     N_sample++;  
