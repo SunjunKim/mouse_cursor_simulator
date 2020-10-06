@@ -1,5 +1,5 @@
 // Human parameters
-int internal_sampling_frequency = 12000;  // Mouse image sampling frequency, unit: Hz 
+int internal_sampling_frequency = 20000;  // Mouse image sampling frequency, unit: Hz 
 int polling_frequency = 8000; // USB polling frequency, unit: Hz
 int display_frequency = 320; // display frame per second, unit: Hz
 float eye_retention_period = 150; // unit: ms
@@ -16,7 +16,7 @@ int sy = 10;  // start position y
 int ex = 980; // end position x
 int ey = 80;  // end position y
 
-float speed = 2000; // cursor movement speed, unit: pixel/second
+float speed = 6000; // cursor movement speed, unit: pixel/second
 
 // ================== INTERNAL VARIABLES =====================
 
@@ -116,7 +116,7 @@ void setup()
 
 void draw()
 {
-  background(127);
+  background(100);
   strokeWeight(1);
  
   if(display_animation)
@@ -159,6 +159,12 @@ void draw()
     
   }
   
+  fill(255);
+  if(display_animation) {
+    text("eye retension: "+eye_retention_frequency+"Hz, time_multiplier = "+time_multiplier, 20, height-40);
+  }
+  text("Sampling: "+internal_sampling_frequency+"Hz, polling: "+polling_frequency+"Hz, display: "+display_frequency+"Hz", 20, height-25);
+  text("Cursor speed: "+speed+" pixel/sec", 20, height-10);
 }
 
 float interpolate(int start, int end, float total, float i)
