@@ -1,16 +1,19 @@
-int internal_sampling_frequency = 12000;
-int polling_frequency = 8000;
-int display_frequency = 240;
+// Human parameters
+int internal_sampling_frequency = 12000;  // Mouse image sampling frequency, unit: Hz 
+int polling_frequency = 1000; // USB polling frequency, unit: Hz
+int display_frequency = 60; // display frame per second, unit: Hz
+float eye_retention_period = 150; // unit: ms
+float eye_retention_frequency = 1000.0 / eye_retention_period; // an image presist in the eye (fps)
+//float eye_retention_frequency = 60.0;   // alternatively, you can set the eye frequency directly 
 
-int eye_persistent_frequency = 16; // an image presist in the eye
-
+// Movement profile
 // unit: pixel
 int sx = 20;  // start position x
 int sy = 10;  // start position y
 int ex = 980; // end position x
 int ey = 70;  // end position y
 
-float speed = 2000; // pixel/second
+float speed = 4000; // cursor movement speed, unit: pixel/second
 
 // ================== INTERNAL VARIABLES =====================
 
@@ -28,7 +31,7 @@ int num_cursor_display = floor(time_taken * display_frequency); // expected numb
 int[] xs = new int[num_cursor_display+100]; // additional +100 sized buffer, just in case
 int[] ys = new int[num_cursor_display+100];
 
-int num_cursor_persist = ceil(float(display_frequency) / float(eye_persistent_frequency));
+int num_cursor_persist = ceil(float(display_frequency) / eye_retention_frequency);
 
 // counters
 int N_sample = 0;
