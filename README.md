@@ -1,6 +1,12 @@
 # mouse_cursor_simulator
 A displayed cursor simulator, with parameters of mouse sampling fps, USB polling rate, and display frequency
 
+## Assumptions
+These assumption are made to purely compare the mouse-related parameters. Added latency from other system components may vary the result away from the simulation.
+* The sensor captures the physical displacement perfectly.
+* The mouse firmware (and maybe OS) keeps the fractional movement (truncated by integer conversion) and accumulate it in the next USB report.
+* There are absolutely no latency in OS and display.
+
 # Run
 Download Processing environment from https://processing.org/ and open ```mouse_cursor_simulator.pde``` on Processing.
 
