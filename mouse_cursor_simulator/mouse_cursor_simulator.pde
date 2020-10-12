@@ -1,13 +1,20 @@
+import java.util.Random;
+
 // Human parameters
-int internal_sampling_frequency = 20000;  // Mouse image sampling frequency, unit: Hz 
-int polling_frequency = 8000; // USB polling frequency, unit: Hz
-int display_frequency = 320; // display frame per second, unit: Hz
-float eye_retention_period = 150; // unit: ms
-float eye_retention_frequency = 1000.0 / eye_retention_period; // an image presist in the eye (fps)
-//float eye_retention_frequency = 60.0;   // alternatively, you can set the eye frequency directly 
+double internal_sampling_frequency = 20000.0;  // Mouse image sampling frequency, unit: Hz 
+double usb_polling_frequency = 8000.0; // USB polling frequency, unit: Hz
+double display_frequency = 320.0; // display frame per second, unit: Hz
+double eye_retention_period = 150; // unit: ms
+double eye_retention_frequency = 1000.0 / eye_retention_period; // an image presist in the eye (fps)
+//double eye_retention_frequency = 60.0;   // alternatively, you can set the eye frequency directly
+
+// Assume the noise is distributed linearly
+double internal_sampling_jitter = 0.0; // unit: %
+double usb_polling_jitter = 10.0; // unit: %
+double display_polling_jitter = 10.0; // unit: %
 
 boolean display_animation = false;
-float time_multiplier = 1.0 / 10; // when do animation, 1.0 = realtime / 0.1 = 10x slower / 0.01 = 100x slower
+double time_multiplier = 1.0 / 10; // when do animation, 1.0 = realtime / 0.1 = 10x slower / 0.01 = 100x slower
 
 // Movement profile
 // unit: pixel
@@ -16,24 +23,24 @@ int sy = 10;  // start position y
 int ex = 980; // end position x
 int ey = 80;  // end position y
 
-float speed = 3000; // cursor movement speed, unit: pixel/second
+double speed = 3000; // cursor movement speed, unit: pixel/second
 
 // ================== INTERNAL VARIABLES =====================
 
-float displacement = sqrt((sx-ex)*(sx-ex) + (sy-ey)*(sy-ey)); // unit: pixel
-float time_taken = displacement / speed; // unit: second
+double displacement = sqrt((sx-ex)*(sx-ex) + (sy-ey)*(sy-ey)); // unit: pixel
+double time_taken = displacement / speed; // unit: second
 
-float sample_interval = 1.0 / float(internal_sampling_frequency); // unit: second
-float polling_interval = 1.0 / float(polling_frequency);  // unit: second
-float display_interval = 1.0 / float(display_frequency);  // unit: second
+double sample_interval = 1.0 / internal_sampling_frequency; // unit: second
+double polling_interval = 1.0 / usb_polling_frequency;  // unit: second
+double display_interval = 1.0 / display_frequency;  // unit: second
 
 //int num_sampled_points = floor(time_taken * internal_sampling_frequency);
-//int num_polling_request = floor(time_taken * polling_frequency);
-int num_cursor_display = floor(time_taken * display_frequency); // expected number of cursors displayed
+//int num_polling_request = floor(time_taken * usb_polling_frequency);
+int num_cursor_display = floor((float)(time_taken * display_frequency)); // expected number of cursors displayed
 int[] xs = new int[num_cursor_display+100]; // additional +100 sized buffer, just in case
 int[] ys = new int[num_cursor_display+100];
 
-int num_cursor_persist = ceil(float(display_frequency) / eye_retention_frequency);
+int num_cursor_persist = ceil((float)(display_frequency / eye_retention_frequency));
 
 // counters
 int N_sample = 0;
@@ -42,7 +49,9 @@ int N_display = 0;
 
 int window = 0;
 int last_display_millis = 0;
-float residue = 0;
+double residue = 0;
+
+Random rand = new Random();
 
 void setup()
 {
@@ -54,44 +63,48 @@ void setup()
   println("# Displayed Cursor (total) = "+num_cursor_display);
 
   
-  float accum_poll_x = 0;  // accumulated x to be displayed
-  float accum_poll_y = 0;  // accumulated y to be displayed
+  double accum_poll_x = 0;  // accumulated x to be displayed
+  double accum_poll_y = 0;  // accumulated y to be displayed
   
-  float accum_disp_x = 0;
-  float accum_disp_y = 0;
+  double accum_disp_x = 0;
+  double accum_disp_y = 0;
   
-  float last_poll = 0.0;
-  float last_disp = 0.0;
+  double last_poll = 0.0;
+  double last_disp = 0.0;
   
   xs[0] = sx;
   ys[0] = sy;
-  
+  N_display = 1;
   
   // for the movement time:
   // time ticks by the sampling interval
-  for(float time = 0.0; time <= time_taken; time += sample_interval)
-  {    
+  double sampling_noise = 0;
+  double poll_noise = 0;
+  double display_noise = 0;
+  
+  for(double time = 0.0; time <= time_taken; time += sample_interval + sampling_noise)
+  {
     // when polling interval is due, add the detected displacements to the accumulated displacement (done within OS) 
-    if(last_poll + polling_interval <=time){      
-      float segment_start_x = interpolate(sx, ex, time_taken, last_poll); 
-      float segment_start_y = interpolate(sy, ey, time_taken, last_poll);
-      float segment_end_x = interpolate(sx, ex, time_taken, time); 
-      float segment_end_y = interpolate(sy, ey, time_taken, time);
+    if(last_poll + polling_interval + poll_noise <= time){      
+      double segment_start_x = interpolate(sx, ex, time_taken, last_poll); 
+      double segment_start_y = interpolate(sy, ey, time_taken, last_poll);
+      double segment_end_x = interpolate(sx, ex, time_taken, time); 
+      double segment_end_y = interpolate(sy, ey, time_taken, time);
       
       accum_poll_x += segment_end_x - segment_start_x;
       accum_poll_y += segment_end_y - segment_start_y;
       
-      last_poll += polling_interval;
+      last_poll = time;
+      poll_noise = generate_noise(polling_interval, usb_polling_jitter);
       N_poll++;  
     }
     
-    // when display interval is due, send the accumulated displacement to the screen. Assume internal floating point calculatin within OS    
-    if(last_disp + display_interval <= time) {
-      int count_x = floor(accum_poll_x);
-      int count_y = floor(accum_poll_y);
+    // when display interval is due, send the accumulated displacement to the screen. Assume internal doubleing point calculatin within OS    
+    if(last_disp + display_interval + display_noise <= time) {
+      int count_x = floor((float)accum_poll_x);
+      int count_y = floor((float)accum_poll_y);
       
       // display works in integer pixels
-      N_display++;
       xs[N_display] = xs[N_display-1] + count_x;
       ys[N_display] = ys[N_display-1] + count_y;
       
@@ -99,11 +112,13 @@ void setup()
       accum_poll_x -= count_x;
       accum_poll_y -= count_y;
       
-      last_disp += display_interval;
+      last_disp = time;
+      display_noise = generate_noise(display_interval, display_polling_jitter);
+      N_display++;
     }
     
-    N_sample++;  
-    
+    sampling_noise = generate_noise(sample_interval, internal_sampling_jitter);
+    N_sample++;
   }
   println("N_sample = "+N_sample);
   println("N_poll = "+N_poll);
@@ -112,13 +127,20 @@ void setup()
   last_display_millis = millis();
 }
 
-
+double generate_noise(double interval, double percentage)
+{
+  double value_min = -interval*(percentage/100.0)/2;
+  double value_max = interval*(percentage/100.0)/2;
+  double rnd = rand.nextDouble(); 
+  double val = value_min + (value_max - value_min)*rnd;
+  return val;
+}
 
 void draw()
 {
   background(100);
   strokeWeight(1);
- 
+  
   if(display_animation)
   {
     float opacity = 0.0;
@@ -163,16 +185,16 @@ void draw()
   if(display_animation) {
     text("eye retension: "+eye_retention_frequency+"Hz, time_multiplier = "+time_multiplier, 20, height-40);
   }
-  text("Sampling: "+internal_sampling_frequency+"Hz, polling: "+polling_frequency+"Hz, display: "+display_frequency+"Hz", 20, height-25);
+  text("Sampling: "+internal_sampling_frequency+"Hz, polling: "+usb_polling_frequency+"Hz, display: "+display_frequency+"Hz", 20, height-25);
   text("Cursor speed: "+speed+" pixel/sec", 20, height-10);
 }
 
-float interpolate(int start, int end, float total, float i)
+double interpolate(int start, int end, double total, double i)
 {
   int gap = end - start;
-  float ratio = i / total;
+  double ratio = i / total;
   
-  return float(gap)*ratio+float(start);
+  return (double)gap*ratio+(double)start;
 }
 
 void draw_cursor(int xpos, int ypos)
