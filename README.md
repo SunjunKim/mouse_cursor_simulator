@@ -14,15 +14,21 @@ Download Processing environment from https://processing.org/ and open ```mouse_c
 # Parameters
 Note that DPI doesn't matter, as the code assumes a perfect linear motion with perfect sensing capability (no flaw in the sensor, so any DPI works).
 ```java
-int internal_sampling_frequency = 12000;  // Mouse image sampling frequency, unit: Hz 
-int polling_frequency = 8000; // USB polling frequency, unit: Hz
-int display_frequency = 320; // display frame per second, unit: Hz
-float eye_retention_period = 150; // unit: ms
-float eye_retention_frequency = 1000.0 / eye_retention_period; // an image presist in the eye (fps)
-//float eye_retention_frequency = 60.0;   // alternatively, you can set the eye frequency directly 
+// Human parameters
+double internal_sampling_frequency = 20000.0;  // Mouse image sampling frequency, unit: Hz 
+double usb_polling_frequency = 8000.0; // USB polling frequency, unit: Hz
+double display_frequency = 320.0; // display frame per second, unit: Hz
+double eye_retention_period = 150; // unit: ms
+double eye_retention_frequency = 1000.0 / eye_retention_period; // an image presist in the eye (fps)
+//double eye_retention_frequency = 60.0;   // alternatively, you can set the eye frequency directly
+
+// Assume the noise is distributed linearly
+double internal_sampling_jitter = 0.0; // unit: %
+double usb_polling_jitter = 10.0; // unit: %
+double display_polling_jitter = 10.0; // unit: %
 
 boolean display_animation = false;
-float time_multiplier = 1.0 / 10; // when do animation, 1.0 = realtime / 0.1 = 10x slower / 0.01 = 100x slower
+double time_multiplier = 1.0 / 10; // when do animation, 1.0 = realtime / 0.1 = 10x slower / 0.01 = 100x slower
 
 // Movement profile
 // unit: pixel
